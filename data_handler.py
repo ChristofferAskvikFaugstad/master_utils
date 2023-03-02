@@ -7,6 +7,8 @@ NEBSTART = "C:\\Users\\chris\\masteroppgave\\data\\dft-data\\neb"
 def get_Ni30_template():
     return read_vasp_xml_final(NI30BEST)
 
+def get_Ni30_COs_template():
+    return read_vasp_xml_final("utilsCO5-25.xml")
 
 def get_structure_path(path):
     return read_vasp_xml_final(path)
