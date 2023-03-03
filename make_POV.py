@@ -82,6 +82,7 @@ class POVMaker:
         save_all : bool = True,
         duration : int = 300,
         loop : int = 0,
+        name : str = "gif",
          **kwargs):
             """
             In the cwd it gatters all png files and sorts on the float of the
@@ -99,7 +100,7 @@ class POVMaker:
                 new_frame = Image.open(i)
                 frames.append(new_frame)
 
-            frames[0].save(f"{self.folder}/gif.gif", format='GIF',
+            frames[0].save(f"{self.folder}/{name}.gif", format='GIF',
                             append_images = frames[1:],
                             save_all = save_all,
                             duration = duration, loop = loop, **kwargs)
@@ -109,7 +110,7 @@ class POVMaker:
 
 
 if __name__ == "__main__":
-    from my_modules.project import *
+    from utils.master import *
     path = "H2_adsorbtion_neb/neb_os_s/neb.traj"
     traj = Trajectory(path)
 

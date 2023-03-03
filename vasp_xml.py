@@ -1,4 +1,4 @@
-from my_modules.imports import*
+from utils.imports import*
 from typing import List
 
 def read_vasp_xml_final(xml_path : str) -> Atoms:

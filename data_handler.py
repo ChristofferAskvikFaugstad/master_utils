@@ -27,12 +27,15 @@ def get_all_structures_relpath(relpath):
 def get_names_relfolder(folder):
     return [subfolder for subfolder in os.listdir(os.path.join(DFTSTART, folder)) if os.path.isdir(os.path.join(DFTSTART, folder, subfolder))]
 
-def get_structures_relfolder(folder):
+def get_structures_folder(folder):
     structures = []
-    paths = [os.path.join(DFTSTART, folder, subfolder,"vasprun.xml") for subfolder in os.listdir(os.path.join(DFTSTART,folder)) if os.path.isdir(os.path.join(DFTSTART,folder, subfolder)) ]
+    paths = [os.path.join(folder, subfolder,"vasprun.xml") for subfolder in os.listdir(os.path.join(folder)) if os.path.isdir(os.path.join(folder, subfolder)) ]
     for path in paths:
         structures.append(get_structure_path(path))
     return structures
+
+def get_structures_relfolder(folder):
+    return get_structures_folder(os.path.join(DFTSTART, folder))
 
 def get_images_relpath(rel_path):
     images = []
