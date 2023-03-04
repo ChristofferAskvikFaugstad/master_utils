@@ -18,7 +18,7 @@ from typing import List
 from ase.ga.ofp_comparator import OFPComparator
 import dis
 from agox.databases import Database
-from py4vasp import Calculation
+# from py4vasp import Calculation
 from agox.candidates import StandardCandidate
 from ase.calculators.vasp import Vasp
 from ase.calculators.emt import EMT

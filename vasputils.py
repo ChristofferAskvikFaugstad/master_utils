@@ -1,5 +1,5 @@
 #### File with all own defines VASP utility functions for direct file handling ####
-from my_modules.imports import * # importing all modlues for consistency
+from utils.imports import * # importing all modlues for consistency
 
 
 def get_pairs(OUTCAR_path : str):# -> list[tuple]:
