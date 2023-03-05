@@ -16,8 +16,9 @@ class SecondCOHandler(IDHandler):
         super().__init__(initial_candidates)
     
     def add_ID(self, ID):
-        self.tested_sites.append(ID)
-        self.avail_sites.remove(ID)
+        if not (ID in self.tested_sites):
+            self.tested_sites.append(ID)
+            self.avail_sites.remove(ID)
     
     def get_next_ID(self):
         return self.avail_sites[np.random.randint(0,len(self.avail_sites))]
