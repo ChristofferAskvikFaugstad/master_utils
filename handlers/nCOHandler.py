@@ -4,6 +4,10 @@ from agox.candidates import StandardCandidate
 import random
 from itertools import combinations
 
+class MyGood:
+    pass
+
+
 class nCOHandler(IDHandler):
     """General class for n coadsorbed CO moleules.
     The follwing assumptions are made:
