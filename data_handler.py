@@ -5,6 +5,15 @@ NI30BEST = "C:\\Users\\chris\\masteroppgave\\data\\dft-data\\single\\ni30\\song\
 DFTSTART = "C:\\Users\\chris\\masteroppgave\\data\\dft-data"
 NEBSTART = "C:\\Users\\chris\\masteroppgave\\data\\dft-data\\neb"
 
+# list of folders to best structures found through search
+NI30COBEST = "C:\\Users\\chris\\masteroppgave\\data\\dft-data\\single\\ni30_COs\\CO12-13-22"
+
+
+
+
+
+
+
 def get_Ni30_template():
     return read_vasp_xml_final(NI30BEST)
 
@@ -68,6 +77,8 @@ def plot_energies_relfolder(folder):
 
 def get_energy_images(images):
     return np.array([image.get_potential_energy() for image in images])
+
+
 
 
 def make_database_relfolder(folder, db_path,template = get_Ni30_template(), sparse = 5):

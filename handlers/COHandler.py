@@ -54,7 +54,8 @@ class nCOHandler(IDHandler):
             if bond_type == 3:
                 additional_atoms += get_hollow_CO(template,single_ID[0],single_ID[1],single_ID[2])
         
-        return additional_atoms
+        return Atoms(additional_atoms)
+    
     def check_ID(self, ID):
         """Helper function to check that the configuration does not provide a
         very unreasonable configuration.
@@ -98,4 +99,31 @@ class nCOHandler(IDHandler):
 
 
 if __name__ == "__main__":
-   pass
+    from agox.generators import RandomGenerator
+    from agox.environments import Environment
+    from ase.io import read,write
+    import numpy as np
+    from utils.manual_generator import ManualGenerator, ManualObserver
+    # from utils.handlers.COHandler import nCOHandler
+
+    template = read("code\\coverage\\3CO\\3COgofee\\job\\POSCAR")
+    # Confine to one side of structure since it is symmetric
+    confinement_cell = np.array([[16,0,0],[0,6,0],[0,0,16]])
+    confinement_corner = np.array([0, 6, 0])
+
+    environment = Environment(template=template, symbols='2C2O', 
+        confinement_cell=confinement_cell, confinement_corner=confinement_corner)
+
+    nhandler = nCOHandler(2)
+
+    generator = ManualGenerator(nhandler, **environment.get_confinement())
+    observer = ManualObserver(nhandler)
+
+    new_candidates = []
+    while len(new_candidates) < 20:
+        candidate = generator.get_candidates(None ,environment)[0]
+        if candidate != None:
+            # Check that the adddition went well
+            new_candidates.append(candidate)
+    view(new_candidates, block=True)
+    pass
