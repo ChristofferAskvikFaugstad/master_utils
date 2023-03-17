@@ -81,7 +81,9 @@ def get_energy_images(images):
 
 
 
-def make_database_relfolder(folder, db_path,template = get_Ni30_template(), sparse = 5):
+def make_database_relfolder(folder, db_path,template = None, sparse = 5):
+    if template == None:
+        template  = get_Ni30_template()
     database = Database(db_path)
     filenames = [os.path.join(folder,name) for name in get_names_relfolder(folder)]
     for i,name in enumerate(filenames):
