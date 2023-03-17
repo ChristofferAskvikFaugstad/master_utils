@@ -94,6 +94,7 @@ def make_database_relfolder(folder, db_path,template = get_Ni30_template(), spar
 
 
 if __name__ == "__main__":
+    pass
     # view(get_structures_relfolder("single\\ni30_COHs"), block = True)
 
 
