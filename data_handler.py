@@ -81,7 +81,9 @@ def get_energy_images(images):
 
 
 
-def make_database_relfolder(folder, db_path,template = get_Ni30_template(), sparse = 5):
+def make_database_relfolder(folder, db_path,template = None, sparse = 5):
+    if template == None:
+        template  = get_Ni30_template()
     database = Database(db_path)
     filenames = [os.path.join(folder,name) for name in get_names_relfolder(folder)]
     for i,name in enumerate(filenames):
@@ -94,12 +96,13 @@ def make_database_relfolder(folder, db_path,template = get_Ni30_template(), spar
 
 
 if __name__ == "__main__":
+    pass
     # view(get_structures_relfolder("single\\ni30_COHs"), block = True)
 
 
-    make_database_relfolder("single/ni30_COs", "CO_10.03_allrelax.db", sparse = 10)
+    # make_database_relfolder("single/ni30_COs", "CO_10.03_allrelax.db", sparse = 10)
 
-    pass
+    # pass
     # view(get_Ni30_template(), block = True)
     # view(get_images_relpath("HCO_dis/HCO5-25_CH5-24-25O12-13-25"), block = True)
     # view(get_images_relpath("HCO_dis/HCO5-25_CH5-24-25O12-13-25"), block = True)
