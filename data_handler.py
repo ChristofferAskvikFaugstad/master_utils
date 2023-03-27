@@ -129,6 +129,151 @@ def make_database_relfolder(folder, db_path,template = None, sparse = 5):
 
 
 
+def get_k_lowest_energies(k, energies, structures):
+    """
+    Returns the k lowest energies and their associated structures.
+    
+    Parameters:
+        k (int): The number of lowest energies to return.
+        energies (list): A list of energies.
+        structures (list): A list of structures associated with the energies.
+    
+    Returns:
+        A tuple containing two lists: the k lowest energies and their associated structures.
+    """
+    # Combine the energies and structures into a list of tuples
+    data = list(zip(energies, structures))
+    
+    # Sort the list of tuples based on energy
+    sorted_data = sorted(data, key=lambda x: x[0])
+    
+    # Extract the k lowest energies and their associated structures
+    k_lowest = sorted_data[:k]
+    k_energies = [d[0] for d in k_lowest]
+    k_structures = [d[1] for d in k_lowest]
+    
+    # Return the k lowest energies and their associated structures
+    return k_energies, k_structures
+
+def extract_stop_reason(oct_file_path):
+    with open(oct_file_path, 'r') as f:
+        lines = f.readlines()
+    for line in reversed(lines):
+        if 'aborting loop' in line.lower():
+            # return line.split(':')[-1].strip()
+            return line
+    return None
+
+def diagnose_calculation(outcar_file_path):
+    with open(outcar_file_path, 'r') as f:
+        lines = f.readlines()
+    
+    iteration = None
+    error = False
+    for i,line in enumerate(lines):
+        
+        if "|     EEEEEEE  R     R  R     R  OOOOOOO  R     R     ###     ###     ###     |\n" == line:
+            error_lines = []
+            for error_line in lines[i+2:]:
+                if error_line == "|       ---->  I REFUSE TO CONTINUE WITH THIS SICK JOB ... BYE!!! <----       |\n":
+                    break
+                else:
+                    error_lines.append(error_line)
+            error_msg = "".join(error_lines[:-1])
+            error = True
+            # return line.split(':')[-1].strip()
+            
+    for line in reversed(lines):
+        if iteration == None:
+            if "Iteration" in line:
+                iteration = int(line[49:56])
+    
+    print(f"Used {iteration} Iterations")
+
+    if error:
+        print("The followig error occured:")
+        print(error_msg)
+            
+def diagnose_folder(folder,i_max):
+    for i in range(i_max):
+        print(i)
+        diagnose_calculation(f"data/dft-data/{folder}/{i}/OUTCAR")
+
+import numpy as np
+
+def calculate_radius_gyration(atoms  : Atoms):
+    """
+    Calculate the radius of gyration of an Atoms object.
+
+    Parameters
+    ----------
+    atoms : ASE Atoms object
+        The Atoms object to calculate the radius of gyration for.
+
+    Returns
+    -------
+    float
+        The radius of gyration in Å.
+    """
+    # Calculate the center of mass
+    com = atoms.get_center_of_mass()
+
+    # Translate the coordinates so that the center of mass is at the origin
+    positions = atoms.positions - com
+
+    rg = np.sqrt(np.sum(np.sum(positions*positions, axis = 1)*atoms.get_masses())/np.sum(atoms.get_masses()))
+    return rg
+
+
+from utils.manual_placement import get_CNibonds
+def name_nCOstructures_in_relfolder(start_folder, nfolder, nCO : int):
+    """Renames CO adsorptions structures based on the bonds C make with Ni"""
+    structures = get_structures_relfolder(start_folder)
+    for i in range(nfolder):
+        structure = structures[i]
+        CO_bonds = [[] for _ in range(nCO)]
+        old_path = os.path.join(DFTSTART,start_folder, str(i))
+
+        for bond in get_CNibonds(structure):
+            CO_bonds[bond[0]-30-nCO].append(str(bond[1]))
+        
+        
+        name = "CO" + "_CO".join(["-".join(CO_bond) for CO_bond in CO_bonds])
+        new_path = os.path.join(DFTSTART,start_folder, name)
+        os.popen(f"move {old_path} {new_path}")
+
+import os
+from ase.neb import NEBTools
+from utils.make_POV import POVMaker
+from utils.data_handler import get_images_relpath
+
+class Reaction:
+    reaction_path = "masteroppgave_tex\\Images\\Reactions"
+    def __init__(self,relpath, name, title = None):
+        if title == None:
+             title = name
+        self.title = title
+        self.images = get_images_relpath(relpath)
+        self.nebtool = NEBTools(self.images)
+        self.name = name
+        self.pov_folder = os.path.join(self.reaction_path,name)
+        self.pov_maker = POVMaker(self.images, self.pov_folder)
+
+    def view(self):
+        view(self.images)
+    
+    def make_bandplot(self):
+        self.nebtool.plot_band()
+        title = plt.gca().title
+        title_text = f"{self.title} "+title.get_text()
+        title.set_text(title_text)
+        plt.savefig(f"{self.pov_folder}/{self.name}.pdf")
+        plt.show()
+    
+    def make_gif(self, rotation = "0x,0y,0z"):
+            self.pov_maker.make_pngs( rotation=rotation)
+            self.pov_maker.make_gif(name = self.name)
+
 if __name__ == "__main__":
     # structures = read_outcar("OUTCAR")
     # view(structures, block = True)
