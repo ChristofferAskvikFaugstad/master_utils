@@ -4,10 +4,10 @@
 # from my_modules.vasputils import*
 import sys
 sys.path.append("utils")
-from IOdatabase import IODataBase
-from vasp_xml import *
-from manual_placement import *
-from make_POV import *
-from COBonds import *
-from data_handler import *
-from imports import *
+from utils.IOdatabase import IODataBase
+from utils.vasp_xml import *
+from utils.manual_placement import *
+from utils.make_POV import *
+from utils.COBonds import *
+from utils.data_handler import *
+from utils.imports import *
