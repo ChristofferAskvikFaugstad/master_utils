@@ -1,4 +1,5 @@
 from utils.vasp_xml import *
+from utils.vasp_outcar import *
 import os
 import shutil
 import xml.etree.ElementTree as ET
@@ -31,9 +32,25 @@ NI305COBEST = os.path.join(
     DFTSTART,
     "single\\ni30_5COs\\CO9-16-22_CO4-14-20_CO12-13-22_CO4-15-21_CO11-14\\vasprun.xml",
 )
-NI3010COBEST = os.path.join(
+NI306COBEST = os.path.join(  # 11.04
     DFTSTART,
-    "single\\ni30_10COs\\CO8-18-21_CO0-7-20_CO11_CO9-16-22_CO11-14-19_CO6-13_CO3_CO6-10-24_CO15_CO3-10-18\\vasprun.xml",
+    "single\\ni30_6COs\\CO10-15_CO0_CO3-6-10_CO11-14-19_CO12-13-22_CO6-13-25\\vasprun.xml",
+)
+NI307COBEST = os.path.join(  # 11.04
+    DFTSTART,
+    "single\\ni30_7COs\\CO1-23-24_CO8-17_CO5-11-23_CO12-13-22_CO11-14-19_CO7_CO10-15-24\\vasprun.xml",
+)
+NI308COBEST = os.path.join(  # 11.04
+    DFTSTART,
+    "single\\ni30_8COs\\CO5-11-23_CO0-7_CO5-12-25_CO1-4-15_CO0-8-21_CO8-17-18_CO11-14_CO1-23-24\\vasprun.xml",
+)
+NI309COBEST = os.path.join(  # 11.04
+    DFTSTART,
+    "single\\ni30_9COs\\CO5-12-25_CO6-10-24_CO9-16-22_CO1-4-14_CO14-19-20_CO3_CO2-12-16_CO1-23-24_CO10-15-18\\vasprun.xml",
+)
+NI3010COBEST = os.path.join(  # 11.04
+    DFTSTART,
+    "single\\ni30_10COs\\ni30_10COs_proper_order\\vasprun.xml",
 )
 NI3021COBEST = os.path.join(DFTSTART, "single\\ni30_21COs/21\\vasprun.xml")
 NI3026COBEST = os.path.join(DFTSTART, "single\\ni30_26COs\\26\\vasprun.xml")
@@ -46,6 +63,10 @@ BEST_CO = [
     NI303COBEST,
     NI304COBEST,
     NI305COBEST,
+    NI306COBEST,
+    NI307COBEST,
+    NI308COBEST,
+    NI309COBEST,
     NI3010COBEST,
     NI3021COBEST,
     NI3026COBEST,
@@ -55,109 +76,147 @@ BEST_CO = [
 
 
 TEX = os.path.join("C:\\Users", "chris", "masteroppgave_tex")
-TEX_REACTION = os.path.join(TEX, "Images", "Reactions")
+TEXIMAGES = os.path.join(TEX, "Images")
+TEX_REACTION = os.path.join(TEXIMAGES, "Reactions")
+
+OUTCAR = "OUTCAR"
+XML = "vasprun.xml"
+NEB = "neb"
+
+
+def get_teximage_path(path):
+    """Returns the path joined with the the tex image folder"""
+    return os.path.join(TEXIMAGES, path)
 
 
 #### FUNCTIONS ####
-class EnergyForceCalculator:
-    """A calculator that returns the energy and forces from input, workaround to use OUTCAR files in ASE"""
-
-    def __init__(self, energy, forces) -> None:
-        self.energy = energy
-        self.forces = forces
-
-    def get_forces(self, Atoms):
-        return self.forces
-
-    def get_potential_energy(self, atoms, force_consistent=False):
-        return self.energy
 
 
-def read_outcar(outcar_file_path):
-    """Reads an OUTCAR file and returns a list of ASE Atoms objects with energy and forces"""
-    with open(outcar_file_path, "r") as f:
-        lines = f.readlines()
-        structures = []
-        for i, line in enumerate(lines):
-            if "POSCAR:" in line:
-                elements = line.split()[1:]
-
-            if "  direct lattice vectors " in line:
-                cell_vectors = np.array(
-                    [lines[i + 1 + j].split()[0:3] for j in range(3)], dtype=np.float64
-                )
-
-            if "ions per type =" in line:
-                number_of_ions = [int(num_str) for num_str in line.split()[4:]]
-                tot_number_atoms = sum(number_of_ions)
-                elements_array = []
-                for element, number in zip(elements, number_of_ions):
-                    elements_array += [element] * number
-
-            if (
-                line
-                == " POSITION                                       TOTAL-FORCE (eV/Angst)\n"
-            ):
-                positions_forces = np.zeros((tot_number_atoms, 6))
-                for j in range(tot_number_atoms):
-                    positions_forces[j, :] = np.array(
-                        lines[i + j + 2].split(), dtype=np.float64
-                    )
-                energy = float(lines[i + j + 13].split()[-2])
-                structures.append(
-                    Atoms(
-                        elements_array,
-                        positions=positions_forces[:, :3],
-                        cell=cell_vectors,
-                        pbc=True,
-                        calculator=EnergyForceCalculator(
-                            energy, positions_forces[:, 3:]
-                        ),
-                    )
-                )
-
-    return structures
+def reader(outcar_reader: bool, final: bool):
+    if outcar_reader:
+        if final:
+            return read_outcar_final
+        else:
+            return read_outcar
+    else:
+        if final:
+            return read_vasp_xml_final
+        else:
+            return read_vasp_xml_all
 
 
-def get_Ni30_template():
-    return read_vasp_xml_final(NI30BEST)
+def add_relative_path(path: str, relative: bool, relative_path=DFTSTART):
+    if relative:
+        return os.path.join(relative_path, path)
+    else:
+        return path
+
+
+def add_path_ending(path, outcar_reader: bool):
+    if outcar_reader:
+        return os.path.join(path, "OUTCAR")
+    else:
+        return os.path.join(path, "vasprun.xml")
+
+
+def get_Ni30_template(outcar_reader=True):
+    return reader(outcar_reader, final=True)(NI30BEST)
 
 
 def get_Ni30_COs_template():
     return read_vasp_xml_final("utilsCO5-25.xml")
 
 
-def get_structure_path(path):
-    return read_vasp_xml_final(path)
+def get_structure_path(path, outcar_reader=True, relative=True) -> Atoms:
+    """Returns the final structure of the path
+
+    Parameters
+    ----------
+    path : str
+        The path to the folder with the calculation
+    outcar_reader : bool, optional
+        Determines what file should be read, by default True
+
+    Returns
+    -------
+    Atoms
+        Final geometry of calculation
+    """
+    path = add_relative_path(add_path_ending(path, outcar_reader), relative)
+    return reader(outcar_reader, final=True)(path)
 
 
-def get_structure_relpath(rel_path):
-    return read_vasp_xml_final(os.path.join(DFTSTART, rel_path, "vasprun.xml"))
+# def get_structure_relpath(rel_path, **kwargs):
+#     """Wrapper for the get_structure_path function.
+#     It ads the DFTSTART path to the rel_path supplied."""
+#     return get_structure_path(os.path.join(DFTSTART, rel_path), **kwargs)
 
 
-def get_all_structures_path(path):
-    return read_vasp_xml_all(path)
+def get_all_structures_path(path, outcar_reader=True, relative=True, sparse=1):
+    """Returns all the structures of the path
+
+    Parameters
+    ----------
+    path : str
+        The path to the folder with the calculation
+    outcar_reader : bool, optional
+        Determines what file should be read, by default True
+
+    Returns
+    -------
+    Atoms
+        Final geometry of calculation
+    """
+    path = add_relative_path(add_path_ending(path, outcar_reader), relative)
+    return reader(outcar_reader, final=False)(path)[::sparse]
 
 
-def get_all_structures_relpath(relpath):
-    return get_all_structures_path(os.path.join(DFTSTART, relpath, "vasprun.xml"))
+# def get_all_structures_relpath(relpath, **kwargs):
+#     """Wrapper for the get_all_structures_path function.
+#     It ads the DFTSTART path to the rel_path supplied."""
+#     return get_all_structures_path(os.path.join(DFTSTART, rel_path), **kwargs)
 
 
-def get_all_structures_sparse_path(path, sparse=5):
-    structures = []
-    mytree = ET.parse(path)
-    myroot = mytree.getroot()
-    num_calculations = len(myroot.findall("calculation"))
-    for i in range(0, num_calculations, sparse):
-        structures.append(next(read_vasp_xml(path, index=i)))
+# def get_all_structures_sparse_path(path, sparse=5):
+#     structures = []
+#     mytree = ET.parse(path)
+#     myroot = mytree.getroot()
+#     num_calculations = len(myroot.findall("calculation"))
+#     for i in range(0, num_calculations, sparse):
+#         structures.append(next(read_vasp_xml(path, index=i)))
 
-    return structures
+#     return structures
 
 
-def get_all_structures_sparse_relpath(relpath, sparse=5):
-    return get_all_structures_sparse_path(
-        os.path.join(DFTSTART, relpath, "vasprun.xml"), sparse=sparse
-    )
+# def get_all_structures_sparse_relpath(relpath, sparse=5):
+#     return get_all_structures_sparse_path(
+#         os.path.join(DFTSTART, relpath, "vasprun.xml"), sparse=sparse
+#     )
+
+
+def get_vasp_calculation_names_path(path, relative=True, outcar_reader=True):
+    """Returns the subfolders in the path that contains vaspcalculations"""
+    file_ending = OUTCAR if outcar_reader else XML
+    path = add_relative_path(path, relative)
+    return [
+        subfolder
+        for subfolder in os.listdir(os.path.join(path))
+        if os.path.isfile(os.path.join(path, subfolder, file_ending))
+    ]
+
+
+# def get_vasp_calculations_names_relpath(relpath):
+#     """Wrapper for the get_all_structures_path function.
+#     It ads the DFTSTART path to the rel_path supplied."""
+#     return get_all_structures_path(os.path.join(DFTSTART, rel_path), **kwargs)
+
+
+def get_names_folder(folder):
+    return [
+        subfolder
+        for subfolder in os.listdir(os.path.join(folder))
+        if os.path.isdir(os.path.join(folder, subfolder))
+    ]
 
 
 def get_names_relfolder(folder):
@@ -168,15 +227,18 @@ def get_names_relfolder(folder):
     ]
 
 
-def get_structures_folder(folder):
+def get_structures_folder(folder, outcar_reader=True, relative=True):
     structures = []
     paths = [
-        os.path.join(folder, subfolder, "vasprun.xml")
-        for subfolder in os.listdir(os.path.join(folder))
-        if os.path.isdir(os.path.join(folder, subfolder))
+        os.path.join(folder, subfolder)
+        for subfolder in get_vasp_calculation_names_path(
+            folder, relative=relative, outcar_reader=outcar_reader
+        )
     ]
     for path in paths:
-        structures.append(get_structure_path(path))
+        structures.append(
+            get_structure_path(path, outcar_reader=outcar_reader, relative=relative)
+        )
     return structures
 
 
@@ -210,13 +272,17 @@ def get_energy_images(images):
     return np.array([image.get_potential_energy() for image in images])
 
 
-def make_database_relfolder(folder, db_path, template=None, sparse=5):
+def make_database_folder(
+    folder, db_path, template=None, sparse=5, outcar_reader=True, relative=True
+):
     if template == None:
         template = get_Ni30_template()
     database = Database(db_path)
     filenames = [os.path.join(folder, name) for name in get_names_relfolder(folder)]
     for i, name in enumerate(filenames):
-        for structure in get_all_structures_sparse_relpath(name, sparse=sparse):
+        for structure in get_all_structures_path(
+            name, sparse=sparse, outcar_reader=outcar_reader, relative=relative
+        ):
             candidate = StandardCandidate(template=template, **structure.todict())
             candidate.calc = structure.calc
             database.store_candidate(candidate)
@@ -297,20 +363,22 @@ def diagnose_calculation(outcar_file_path):
         print(error_msg)
 
 
-def diagnose_folder(folder, i_max=None):
+def diagnose_folder(folder, relative=True, i_max=None):
 
     if i_max == None:
-        subfolders = [
-            subfolder
-            for subfolder in os.listdir(os.path.join(DFTSTART, folder))
-            if os.path.isfile(os.path.join(DFTSTART, folder, subfolder, "OUTCAR"))
+        paths = [
+            add_relative_path(os.path.join(folder, subfolder), relative)
+            for subfolder in get_vasp_calculation_names_path(folder, relative=relative)
         ]
     else:
-        subfolders = [str(i) for i in range(i_max)]
+        path = [
+            add_relative_path(os.path.join(folder, subfolder), relative)
+            for subfolder in range(i_max)
+        ]
 
-    for subfolder in subfolders:
-        print(f"Diagnosing {subfolder}:")
-        diagnose_calculation(os.path.join(DFTSTART, folder, subfolder, "OUTCAR"))
+    for path in paths:
+        print(f"Diagnosing {os.path.basename(path)}:")
+        diagnose_calculation(os.path.join(path, OUTCAR))
 
 
 def calculate_radius_gyration(atoms: Atoms):
@@ -343,7 +411,9 @@ def calculate_radius_gyration(atoms: Atoms):
 from utils.manual_placement import get_CNibonds
 
 
-def name_nCOstructures_in_relfolder(start_folder, nCO: int, nfolder=None):
+def name_nCOstructures_in_folder(
+    start_folder, nCO: int, nfolder=None, relative=True, outcar_reader=True
+):
     """Renames CO adsorptions structures based on the bonds C make with Ni
 
     Parameters:
@@ -356,32 +426,31 @@ def name_nCOstructures_in_relfolder(start_folder, nCO: int, nfolder=None):
         None
     """
     if nfolder == None:
-        subfolders = [
-            subfolder
-            for subfolder in os.listdir(os.path.join(DFTSTART, start_folder))
-            if os.path.isfile(os.path.join(DFTSTART, start_folder, subfolder, "OUTCAR"))
-        ]
+        subfolders = get_vasp_calculation_names_path(
+            start_folder, relative=relative, outcar_reader=outcar_reader
+        )
     else:
         subfolders = [str(i) for i in range(nfolder)]
 
     for subfolder in subfolders:
-        old_path = os.path.join(DFTSTART, start_folder, subfolder)
-        structure = get_structure_relpath(os.path.join(old_path))
+        old_path = os.path.join(start_folder, subfolder)
+        structure = get_structure_path(
+            os.path.join(old_path), outcar_reader=outcar_reader, relative=relative
+        )
         CO_bonds = [[] for _ in range(nCO)]
         for bond in get_CNibonds(structure):
             CO_bonds[bond[0] - 30 - nCO].append(str(bond[1]))
 
         name = "CO" + "_CO".join(["-".join(CO_bond) for CO_bond in CO_bonds])
-        new_path = os.path.join(DFTSTART, start_folder, name)
+        new_path = os.path.join(start_folder, name)
         print(f"Renaming {subfolder} to {name}")
         shutil.move(old_path, new_path)
-        # os.popen(f"move {old_path} {newpath}")
 
 
 class Reaction:
     """A class for a reaction."""
 
-    def __init__(self, relpath, name, title=None):
+    def __init__(self, relpath, name, title=None, relative=True):
         """Initializes a Reaction object.
 
         Parameters:
@@ -392,7 +461,11 @@ class Reaction:
         if title == None:
             title = name
         self.title = title
-        self.images = get_images_relpath(relpath)
+        if relative:
+            relpath = os.path.join(NEB, relpath)
+        self.images = get_structures_folder(
+            relpath, outcar_reader=False, relative=relative
+        )
         self.nebtool = NEBTools(self.images)
         self.name = name
         self.pov_folder = os.path.join(TEX_REACTION, name)
@@ -422,7 +495,7 @@ class Reaction:
         self.pov_maker.make_gif(name=self.name)
 
 
-def get_lowest_energy_subfolder_folder(folder):
+def get_lowest_energy_subfolder_folder(folder, relative=True, outcar_reader=True):
     """Returns the name of the subfolder with the lowest energy in the folder folder."""
     subfolders = [
         os.path.join(folder, subfolder)
@@ -431,7 +504,9 @@ def get_lowest_energy_subfolder_folder(folder):
     ]
     energies = []
     for subfolder in subfolders:
-        structure = get_structure_relpath(subfolder)
+        structure = get_structure_path(
+            subfolder, relative=relative, outcar_reader=outcar_reader
+        )
         energies.append(structure.get_potential_energy())
     lowest_energy = np.argmin(energies)
     return os.path.basename(subfolders[lowest_energy])
@@ -461,8 +536,14 @@ def copy_to_data(input_folder: str, output_folder: str):
 
 
 if __name__ == "__main__":
-    # structures = read_outcar("OUTCAR")
-    # view(structures, block = True)
+    from time import time
+
+    cur_time = time()
+    # structures = get_all_structures_path("in\\C2H2_newscr\\0", sparse=5)
+    # structures = get_structures_folder("in\\C2H2_newscr", relative=False)
+    diagnose_folder("single/ni30_3COs")
+    print(f"Elapsed time : {time()-cur_time}")
+    view(structures, block=True)
 
     pass
     # view(get_structures_relfolder("single\\ni30_COHs"), block = True)

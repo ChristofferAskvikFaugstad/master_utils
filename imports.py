@@ -30,15 +30,16 @@ import pandas as pd
 
 import matplotlib.style
 import matplotlib as mpl
+from energydiagram import ED
 
 from cycler import cycler
 
 mpl.rcParams["axes.prop_cycle"] = cycler(
     color=[
-        "#FF0D0D",
         "#50D050",
+        "#ff0d0d",
+        "#2194D6",
         "#909090",
-        "#5CB8D1",
         "#3050F8",
         "#AB5CF2",
         "#E06633",
