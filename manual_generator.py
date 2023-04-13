@@ -60,7 +60,9 @@ class ManualGenerator(GeneratorBaseClass):
             self.writer("Start generator failing at producing valid structure")
             return [None]
 
-        candidate = self.convert_to_candidate_object(candidate, template)
+        candidate = self.convert_to_candidate_object(
+            candidate, environment.get_template()
+        )
         candidate.add_meta_information("description", self.name)
         candidate.add_meta_information(self.id_handler.IDtag, ID)
 

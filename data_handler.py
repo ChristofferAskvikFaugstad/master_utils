@@ -23,7 +23,7 @@ NI302COBEST = os.path.join(
     DFTSTART, "single\\ni30_2COs\\CO5-25_CO12-13-22\\vasprun.xml"
 )
 NI303COBEST = os.path.join(
-    DFTSTART, "single\\ni30_3COs\\CO12-13-22_CO11-14-19_CO4-14-20\\vasprun.xml"
+    DFTSTART, "single\\ni30_3COs\\CO11-14-19_CO12-13-22_CO1-23-24\\vasprun.xml"
 )
 NI304COBEST = os.path.join(
     DFTSTART, "single\\ni30_4COs\\CO11-14_CO1-23-24_CO6-13-25_CO3-17\\vasprun.xml"
