@@ -22,7 +22,7 @@ NI30COBEST = os.path.join(DFTSTART, "single\\ni30_COs\\CO12-13-22\\vasprun.xml")
 NI302COBEST = os.path.join(
     DFTSTART, "single\\ni30_2COs\\CO5-25_CO12-13-22\\vasprun.xml"
 )
-NI303COBEST = os.path.join(
+NI303COBEST = os.path.join(  # 13.04
     DFTSTART, "single\\ni30_3COs\\CO11-14-19_CO12-13-22_CO1-23-24\\vasprun.xml"
 )
 NI304COBEST = os.path.join(
@@ -119,7 +119,7 @@ def add_path_ending(path, outcar_reader: bool):
         return os.path.join(path, "vasprun.xml")
 
 
-def get_Ni30_template(outcar_reader=True):
+def get_Ni30_template(outcar_reader=False):
     return reader(outcar_reader, final=True)(NI30BEST)
 
 
@@ -361,6 +361,8 @@ def diagnose_calculation(outcar_file_path):
     if error:
         print("The followig error occured:")
         print(error_msg)
+    if "Voluntary context switches:" not in lines[-1]:
+        print("The calculation did not finish")
 
 
 def diagnose_folder(folder, relative=True, i_max=None):
