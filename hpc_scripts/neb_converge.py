@@ -1,17 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.vasp_outcar import read_energies_forces_neb_outar
+from utils.hpc_scripts.common_functions import find_numbered_folders
 import os
 
-def find_numbered_folders(directory):
-    numbered_folders = []
 
-    for folder_name in os.listdir(directory):
-        if os.path.isdir(os.path.join(directory, folder_name)):
-            if folder_name.isdigit():
-                numbered_folders.append(folder_name)
-
-    return numbered_folders
 
 def plot_folder(ax1, folder):
     energies, forces = read_energies_forces_neb_outar(
@@ -72,4 +65,4 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    individual()
