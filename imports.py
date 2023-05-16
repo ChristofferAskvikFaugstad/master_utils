@@ -14,6 +14,7 @@ from ase.calculators.emt import EMT
 from ase.neighborlist import build_neighbor_list
 from ase.utils.forcecurve import fit_images
 from ase.build import molecule
+from ase.build import minimize_rotation_and_translation
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox

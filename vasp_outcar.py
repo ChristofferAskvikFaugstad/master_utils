@@ -12,6 +12,12 @@ class EnergyForceCalculator:
         self.forces = forces
         self.charges = charges
         self.magmoms = magmoms
+        self.results = {
+            "energy": self.energy,
+            "forces": self.forces,
+            "charges": self.charges,
+            "magmoms": self.magmoms,
+        }
 
     def get_forces(self, Atoms):
         return self.forces
@@ -103,11 +109,12 @@ def read_energies_forces_neb_outar(outcar_file_path):
 
 
 if __name__ == "__main__":
-    from utils.master import *
+    pass
+    # from utils.master import *
 
-    read_energy_force_neb_outar(
-        r"C:\Users\chris\OneDrive - NTNU\V2022\data_masteroppgave\dft-data\neb\10CO_coverage\CH_HtoCH2\01\OUTCAR"
-    )
+    # read_energy_force_neb_outar(
+    #     r"C:\Users\chris\OneDrive - NTNU\V2022\data_masteroppgave\dft-data\neb\10CO_coverage\CH_HtoCH2\01\OUTCAR"
+    # )
     # structures = read_outcar(
     #     os.path.join(
     #         "C:\\Users",

@@ -46,11 +46,15 @@ NI308COBEST = os.path.join(  # 11.04
 )
 NI309COBEST = os.path.join(  # 11.04
     DFTSTART,
-    "single\\ni30_9COs\\CO5-12-25_CO6-10-24_CO9-16-22_CO1-4-14_CO14-19-20_CO3_CO2-12-16_CO1-23-24_CO10-15-18\\vasprun.xml",
+    "single\\ni30_9COs\\9_CO\\vasprun.xml",
 )
 NI3010COBEST = os.path.join(  # 11.04
     DFTSTART,
     "single\\ni30_10COs\\ni30_10COs_proper_order\\vasprun.xml",
+)
+NI3019COBEST = os.path.join(DFTSTART, "single\\ni30_19COs/19\\vasprun.xml")
+NI3020COBEST = os.path.join(
+    DFTSTART, "single\\ni30_20COs/20CO_correctlabel\\vasprun.xml"
 )
 NI3021COBEST = os.path.join(DFTSTART, "single\\ni30_21COs/21\\vasprun.xml")
 NI3026COBEST = os.path.join(DFTSTART, "single\\ni30_26COs\\26\\vasprun.xml")
@@ -68,6 +72,8 @@ BEST_CO = [
     NI308COBEST,
     NI309COBEST,
     NI3010COBEST,
+    NI3019COBEST,
+    NI3020COBEST,
     NI3021COBEST,
     NI3026COBEST,
     NI3031COBEST,
@@ -278,7 +284,9 @@ def make_database_folder(
     if template == None:
         template = get_Ni30_template()
     database = Database(db_path)
-    filenames = [os.path.join(folder, name) for name in get_names_relfolder(folder)]
+    filenames = [
+        os.path.join(folder, name) for name in get_vasp_calculation_names_path(folder)
+    ]
     for i, name in enumerate(filenames):
         for structure in get_all_structures_path(
             name, sparse=sparse, outcar_reader=outcar_reader, relative=relative
@@ -499,10 +507,11 @@ class Reaction:
 
 def get_lowest_energy_subfolder_folder(folder, relative=True, outcar_reader=True):
     """Returns the name of the subfolder with the lowest energy in the folder folder."""
-    subfolders = [
-        os.path.join(folder, subfolder)
-        for subfolder in os.listdir(folder)
-        if os.path.isfile(os.path.join(folder, subfolder, "vasprun.xml"))
+    subfolders_names = get_vasp_calculation_names_path(
+        folder, relative=relative, outcar_reader=outcar_reader
+    )
+    subfolders =[
+        os.path.join(folder, subfolder) for subfolder in subfolders_names
     ]
     energies = []
     for subfolder in subfolders:
