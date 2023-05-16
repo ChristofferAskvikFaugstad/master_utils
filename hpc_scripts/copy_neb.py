@@ -1,5 +1,4 @@
-#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9 # only valid for saga
-
+#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9
 def main(source = "."):
     from utils.hpc_scripts.common_functions import find_numbered_folders
     from utils.vasp_outcar import read_outcar

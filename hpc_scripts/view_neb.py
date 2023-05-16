@@ -1,4 +1,4 @@
-#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9 # only valid for saga
+#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9
 def main(source = "."):
     from ase.io import read
     from ase.visualize import view

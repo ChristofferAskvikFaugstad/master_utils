@@ -1,3 +1,4 @@
+#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9
 from argparse import ArgumentParser
 import os
 import shutil
