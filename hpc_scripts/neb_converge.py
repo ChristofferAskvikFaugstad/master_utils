@@ -1,3 +1,4 @@
+#!/cluster/home/chrisafa/.conda/envs/agox_env/bin/python3.9 # only valid for saga
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.vasp_outcar import read_energies_forces_neb_outar
