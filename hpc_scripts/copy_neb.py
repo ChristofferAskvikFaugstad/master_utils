@@ -18,12 +18,13 @@ def main(source = "."):
     image_trajectories = [
         read_outcar(os.path.join(folder, "OUTCAR")) for folder in folders[1:-1]
     ]
-    for i, folder in enumerate(folders[1:-1]):
+    for j, folder in enumerate(folders[1:-1]):
         copy_from = os.path.join(folder,"OUTCAR")
         copy_to = os.path.join(destination, folder, "POSCAR")
         print(f"Copying from {copy_from} to {copy_to}")
-        image_trajectories[i].write(os.path.join(destination, folder, "POSCAR"))
+        image_trajectories[j][i].write(os.path.join(destination, folder, "POSCAR"))
 
 
 if __name__ == "__main__":
     main()
+    

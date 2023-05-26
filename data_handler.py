@@ -546,15 +546,98 @@ def copy_to_data(input_folder: str, output_folder: str):
     shutil.copytree(input, dir)
 
 
-if __name__ == "__main__":
-    from time import time
 
-    cur_time = time()
-    # structures = get_all_structures_path("in\\C2H2_newscr\\0", sparse=5)
-    # structures = get_structures_folder("in\\C2H2_newscr", relative=False)
-    diagnose_folder("single/ni30_3COs")
-    print(f"Elapsed time : {time()-cur_time}")
-    view(structures, block=True)
+
+def read_bader(path, valency = None):
+    """Reads the bader charges from the path
+
+    Parameters
+    ----------
+    path : str
+        Path to the bader file
+
+    Returns
+    -------
+    list
+        with bader charges
+    """
+    with open(path, "r") as f:
+        lines = f.readlines()
+    bader_charges = []
+    for line, n_electrons in zip(lines[2:-4], valency):
+        bader_charges.append(float(line.split()[4])- n_electrons)
+        # if line[0] != "#":
+        #     line = line.split()
+        #     bader_dict[line[0]] = float(line[1])
+
+    return bader_charges
+
+def get_bader_charges(path,relative=True, valency = None):
+    
+    
+    path = add_relative_path(path,relative)
+    path = os.path.join(path,"ACF.dat")
+    return read_bader(path, valency = valency)
+
+
+def read_doscar(path):
+    """Reads the doscar file from the path
+
+    Parameters
+    ----------
+    path : str
+        Path to the doscar file
+
+    Returns
+    -------
+    list
+        energy, up_dos, down_dos, e_fermi
+    """
+    with open(path, "r") as f:
+        lines = f.readlines()
+    energy = []
+    up_dos = []
+    down_dos = []
+    for line in lines[7:]:
+        split_line = line.split()
+        if len(split_line) != 5:
+            break
+        else:
+            energy.append(float(split_line[0]))
+            up_dos.append(float(split_line[1]))
+            down_dos.append(float(split_line[2]))
+    energy.pop()
+    up_dos.pop()
+    down_dos.pop()
+    e_fermi = float(lines[5].split()[3])
+    return np.array(energy), np.array(up_dos), np.array(down_dos), e_fermi
+
+
+
+def get_dos(path,relative=True):
+    
+    path = add_relative_path(path,relative)
+    path = os.path.join(path,"DOSCAR")
+    return read_doscar(path)
+
+
+if __name__ == "__main__":
+
+    # print(get_bader_charges(r"in\song_es", relative=False, valency = [10]*30))
+    energy, up_dos, down_dos, efermi = get_dos(r"in\song_es", relative=False)
+    plt.plot(energy, up_dos, color = colors[1])
+    plt.plot(energy, -down_dos, color = colors[2])
+    plt.axvline(efermi, color="black")
+    plt.grid()
+    plt.show()
+    # from time import time
+
+    # cur_time = time()
+    # # structures = get_all_structures_path("in\\C2H2_newscr\\0", sparse=5)
+    # # structures = get_structures_folder("in\\C2H2_newscr", relative=False)
+    # diagnose_folder("single/ni30_3COs")
+    # print(f"Elapsed time : {time()-cur_time}")
+    # view(structures, block=True)
 
     pass
     # view(get_structures_relfolder("single\\ni30_COHs"), block = True)

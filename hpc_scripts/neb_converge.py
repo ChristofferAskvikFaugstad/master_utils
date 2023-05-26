@@ -5,8 +5,6 @@ from utils.vasp_outcar import read_energies_forces_neb_outar
 from utils.hpc_scripts.common_functions import find_numbered_folders
 import os
 
-
-
 def plot_folder(ax1, folder):
     energies, forces = read_energies_forces_neb_outar(
         os.path.join(
@@ -51,6 +49,7 @@ def individual(source = ""):
     n_subplots = n-2
     for folder in folders[1:-1]:
         ax = plt.figure(figsize=(5, 3)).add_subplot(111)
+        
         plot_folder(ax, os.path.join(source, folder))
         ax.grid()
         plt.tight_layout()

@@ -126,10 +126,10 @@ class NEBWriter(CalculationWriter):
             "ediffg": -0.05,  # force criteria
             "ibrion": 3,  # to make vasp not change
             "potim": 0,  # no vasp step
-            "nsw": 1200,  # Number of steps
+            "nsw": 500,  # Number of steps
             "ichain": 0,  # indicate which TS algorithm, 0 - NEB
-            "iopt": 3,  # Choose which neb optimizer
-            "timestep": 0.1,  # General safe value fuond from vtst
+            "iopt": 1,  # Choose which neb optimizer
+            # "timestep": 0.1,  # General safe value fuond from vtst
             "maxmove": 0.1,  # General safe value fuond from vtst
             "lclimb": True,  # Climbing image NEB
             "spring": -5,  # spring constant
@@ -196,11 +196,30 @@ module --force purge
 module load StdEnv
 module load VASPModules
 module load VaspExtra
-module load VASP/6.3.2-intel-2021b-std-wannier90-libxc-hdf5-beef-vtst-097e6cb5a78f237dc588ba9c7877f23b # for the VTST parts\n"""
+"""
         if self.saga:
-            body += """# Loads personalized enviorment on saga\nmodule load Miniconda3/4.9.2\nexport LMOD_DISABLE_SAME_NAME_AUTOSWAP=no\nexport PS1=\$\nsource ${EBROOTMINICONDA3}/etc/profile.d/conda.sh\nconda deactivate &>/dev/null\nconda activate /cluster/home/chrisafa/.conda/envs/agox_env\n"""
+            body += """
+module load VASP/6.3.2-intel-2022b-std-wannier90-libxc-hdf5-beef-vtst-61468720dbe38718a0515b486abaed7b # for the VTST parts
+# Loads personalized enviorment on saga
+module load Anaconda3/2022.10
+export LMOD_DISABLE_SAME_NAME_AUTOSWAP=no
+# Set the ${PS1} (needed in the source of the virtual environment for some Python versions)
+export PS1=\$
+__conda_setup="$('/cluster/software/Anaconda3/2022.10/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/cluster/software/Anaconda3/2022.10/etc/profile.d/conda.sh" ]; then
+        . "/cluster/software/Anaconda3/2022.10/etc/profile.d/conda.sh"
+    else
+        export PATH="/cluster/software/Anaconda3/2022.10/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+conda activate /cluster/home/chrisafa/.conda/envs/agox_env
+"""
         else:
-            body += """# Loads personalized enviorment on fram\nmodule load Anaconda3/2022.05\nexport PS1=\$\nsource ${EBROOTANACONDA3}/etc/profile.d/conda.sh\nconda deactivate &>/dev/null\nconda activate /cluster/home/chrisafa/.conda/envs/master\n"""
+            body += """module load VASP/6.3.2-intel-2021b-std-wannier90-libxc-hdf5-beef-vtst-097e6cb5a78f237dc588ba9c7877f23b # for the VTST parts\n# Loads personalized enviorment on fram\nmodule load Anaconda3/2022.05\nexport PS1=\$\nsource ${EBROOTANACONDA3}/etc/profile.d/conda.sh\nconda deactivate &>/dev/null\nconda activate /cluster/home/chrisafa/.conda/envs/master\n"""
         body += """WORKDIR=$USERWORK/temp/$SLURM_JOB_ID
 mkdir -p $WORKDIR
 cp -r job/* $WORKDIR

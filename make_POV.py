@@ -23,7 +23,7 @@ radii_dict = {
 class POVMaker:
     @property
     def get_default_cmap(self):
-        return mpl.cm.get_cmap("Blues")
+        return mpl.cm.get_cmap("RdBu")
 
     def __init__(self, images: List[Atoms], folder: str):
         self.images = images
@@ -211,16 +211,23 @@ class POVMaker:
         """
         Makes an array of the attribute of the atoms in the images
         """
-        array = np.array([func(image) for image in self.images]).flatten()
+        array = []
+        for image in self.images:
+            array += list(func(image))
+        # array = np.array([func(image) for image in self.images]).flatten()
+        array = np.array(array).flatten()
         return array
 
-    def get_norm(self, array):
+    def get_norm(self, array, center = False):
         """
         Returns a normed array
         """
-        return mpl.colors.Normalize(np.min(array), np.max(array))
+        if center:
+            return mpl.colors.TwoSlopeNorm(vcenter = 0, vmin = np.min(array),vmax = np.max(array))
+        else:
+            return mpl.colors.Normalize(np.min(array), np.max(array))
 
-    def make_colorbar(self, array, cmap=None, orientation="horizontal"):
+    def make_colorbar(self, array, cmap=None, orientation="horizontal", label="", nticks=5, center = False):
         """
         Makes a colorbar from a list of colors
         """
@@ -231,14 +238,25 @@ class POVMaker:
         if orientation == "horizontal":
             ax = fig.add_axes([0.05, 0.80, 0.9, 0.1])
         if orientation == "vertical":
-            ax = fig.add_axes([0.80, 0.05, 0.1, 0.9])
-
-        cb = mpl.colorbar.ColorbarBase(
+            ax = fig.add_axes([0.80, 0.05, 0.05, 0.45])
+        if center:
+            cb = mpl.colorbar.ColorbarBase(
             ax,
             orientation=orientation,
             cmap=cmap,
-            norm=mpl.colors.Normalize(np.min(array), np.max(array)),  # vmax and vmin
-            ticks=np.linspace(np.min(array), np.max(array), 5),
+            norm=self.get_norm(array, center = center),  # vmax and vmin
+            ticks=[*np.linspace(np.min(array), 0, int(nticks/2), endpoint=False),*np.linspace(0,np.max(array), int(nticks/2)+1, endpoint=True)],
+            label=label,
+            )
+        
+        else:
+            cb = mpl.colorbar.ColorbarBase(
+            ax,
+            orientation=orientation,
+            cmap=cmap,
+            norm=self.get_norm(array),  # vmax and vmin
+            ticks=np.linspace(np.min(array), np.max(array), nticks),
+            label=label,
         )
 
         plt.savefig(f"{self.folder}/just_colorbar", bbox_inches="tight")
@@ -255,10 +273,11 @@ class POVMaker:
         rotation="33x,15y,10z",
         camera_dist=25,
         canvas_width=400,
+        center = False,
         **kwargs,
     ):
         array = self.get_attribute_array(func)
-        norm = self.get_norm(array)
+        norm = self.get_norm(array, center = center)
         image = self.images[i]
 
         cur_array = np.array([func(image)]).flatten()
@@ -287,10 +306,11 @@ class POVMaker:
         rotation="33x,15y,10z",
         camera_dist=25,
         canvas_width=400,
+        center = False,
         **kwargs,
     ):
         array = self.get_attribute_array(func)
-        norm = self.get_norm(array)
+        norm = self.get_norm(array, center = center)
 
         for i, image in enumerate(self.images):
             cur_array = np.array([func(image)]).flatten()
@@ -342,6 +362,104 @@ class POVMaker:
             loop=loop,
             **kwargs,
         )
+
+
+
+def isosurface():
+    from ase.calculators.vasp import VaspChargeDensity
+    from ase.io import write
+
+    spin_cut_off = 0.4
+    density_cut_off = 0.00043
+
+    # rotation = '24x, 34y, 14z'
+    rotation = '90x,90y,0z'
+    rotation = '0x,0y,0z'
+
+    name = "upLUMO"
+    vchg = VaspChargeDensity("in/song_es_full_test2/upLUMO.vasp")
+    atoms = vchg.atoms[0]
+
+    povray_settings = {
+        # For povray files only
+        'pause': False,  # Pause when done rendering (only if display)
+        'transparent': False,  # Transparent background
+        'canvas_width': 400,  # Width of canvas in pixels
+        'canvas_height': None,  # Height of canvas in pixels
+        'camera_dist': 25.0,  # Distance from camera to front atom
+        # 'camera_type': 'orthographic angle 35',  # 'perspective angle 20'
+        'textures': len(atoms) * ['ase3']}
+
+    # some more options:
+    # 'image_plane'  : None,  # Distance from front atom to image plane
+    #                         # (focal depth for perspective)
+    # 'camera_type'  : 'perspective', # perspective, ultra_wide_angle
+    # 'point_lights' : [],             # [[loc1, color1], [loc2, color2],...]
+    # 'area_light'   : [(2., 3., 40.) ,# location
+    #                   'White',       # color
+    #                   .7, .7, 3, 3], # width, height, Nlamps_x, Nlamps_y
+    # 'background'   : 'White',        # color
+    # 'textures'     : tex, # Length of atoms list of texture names
+    # 'celllinewidth': 0.05, # Radius of the cylinders representing the cell
+
+    # atoms.edit()
+    generic_projection_settings = {
+        'rotation': rotation,
+        'radii': atoms.positions.shape[0] * [0.3],
+        # 'show_unit_cell': 1
+        }
+
+    # write returns a renderer object which needs to have the render method called
+
+    write(f'{name}.pov', atoms,
+        **generic_projection_settings,
+        povray_settings=povray_settings,
+        isosurface_data=dict(density_grid=vchg.chg[0],
+                            cut_off=density_cut_off,
+                            color=[0.25, 0.25, 0.80, 0.1],))
+
+    subprocess.run(["pvengine64.exe", "/EXIT", "/RENDER", f"{name}.ini"])
+    # spin up density, how to specify color and transparency r,g,b,t and a
+    # material style from the standard ASE set
+
+
+    # write('NiO_marching_cubes2.pov', atoms,
+    #     **generic_projection_settings,
+    #     povray_settings=povray_settings,
+    #     isosurface_data=dict(density_grid=vchg.chgdiff[0],
+    #                         cut_off=density_cut_off,
+    #                         closed_edges=True,
+    #                         color=[0.25, 0.25, 0.80, 0.1],
+    #                         material='simple')).render()
+
+    # # spin down density, how to specify a povray material
+    # # that looks like pink jelly
+    # fun_material = '''
+    # material {
+    #     texture {
+    #     pigment { rgbt < 0.8, 0.25, 0.25, 0.5> }
+    #     finish{ diffuse 0.85 ambient 0.99 brilliance 3 specular 0.5 \
+    # roughness 0.001
+    #         reflection { 0.05, 0.98 fresnel on exponent 1.5 }
+    #         conserve_energy
+    #     }
+    #     }
+    #     interior { ior 1.3 }
+    # }
+    # photons {
+    #     target
+    #     refraction on
+    #     reflection on
+    #     collect on
+    # }'''
+
+    # write('NiO_marching_cubes3.pov', atoms,
+    #     **generic_projection_settings,
+    #     povray_settings=povray_settings,
+    #     isosurface_data=dict(density_grid=vchg.chgdiff[0],
+    #                         cut_off=-spin_cut_off,
+    #                         gradient_ascending=True,
+    #                         material=fun_material)).render()
 
 
 if __name__ == "__main__":
@@ -412,15 +530,31 @@ if __name__ == "__main__":
    31        1.631   3.503   0.000   5.134
    32        0.917   1.597   0.000   2.514"""
 
-    magnetisaiton = np.array([float(line.split()[-1]) for line in text.split("\n")])
+    isosurface()
+
+    # magnetisaiton = np.array([float(line.split()[-1]) for line in text.split("\n")])
+    # path = "in/song_es"
+    # structure = get_structure_path(path, relative = False)
+    # bader_charges = get_bader_charges(path, relative = False, valency=[10]*30)
+    # structure.info["bader_charges"] = bader_charges
+
+    # def func(image):
+    #     return image.info["bader_charges"]
+    
+    # structures = [structure.copy() for _ in range(3)]
+    # structures[1].rotate(90,"x")
+    # structures[2].rotate(90,"y")
+    # pov = POVMaker(structures, "test_POV")
+    # pov.make_pngs_attributes(func, rotation="0x,0y,0z", center=True)
+    # array = pov.get_attribute_array(func)
+    # pov.make_colorbar(array, orientation="vertical", label="Bader charge [e]", center=True, nticks = 6)
+
+
     # structure = get_structure_path("single/ni30_COs/CO12-13-22")
     # norm = mpl.colors.Normalize(np.min(magnetisaiton), np.max(magnetisaiton))
     # print(norm(magnetisaiton))
 
     # structures = get_all_structures_path("single/ni30_COs/CO12-13-22")[:2]
-
-    # pov = POVMaker(structures, "test_POV")
-    # pov.make_pngs_attributes(Atoms.get_magnetic_moments, rotation="180x,0y,180z")
     # pov.make_pngs_attributes(
     #     Atoms.get_magnetic_moments,
     #     rotation="180x,0y,180z",
@@ -434,9 +568,11 @@ if __name__ == "__main__":
     #         os.path.join("neb/CO_dis/CO5-25_C2-5-12-25O6-13-25", folder)
     # )
 
-    images = get_structures_folder("single/ni30_2COs")
-    pov = POVMaker(images, "test_POV")
-    pov.make_colorbar(magnetisaiton, orientation="vertical")
+
+
+    # images = get_structures_folder("single/ni30_2COs")
+    # pov = POVMaker(images, "test_POV")
+    # pov.make_colorbar(magnetisaiton, orientation="vertical")
 
     # pov.make_pngs_attributes(Atoms.get_magnetic_moments, rotation="46x,-77y,-39z")
     # pov.make_gif(name="magmoms", image_name="C", rotation="46x,-77y,-39z")
@@ -477,18 +613,18 @@ if __name__ == "__main__":
 
     # pov.make_induvidual_color(0, colors, rotation="180x,0y,180z")
 
-    from PIL import Image
+    # from PIL import Image
 
-    list_im = ["test_POV2/0.png", "test_POV2/just_colorbar.png"]
-    imgs = [Image.open(i) for i in list_im]
+    # list_im = ["test_POV2/0.png", "test_POV2/just_colorbar.png"]
+    # imgs = [Image.open(i) for i in list_im]
 
-    png = imgs[0]
-    colorbar = imgs[1]
+    # png = imgs[0]
+    # colorbar = imgs[1]
 
-    colorbar = colorbar.resize(
-        (png.size[0], int(png.size[0] / colorbar.size[0] * colorbar.size[1]))
-    )
+    # colorbar = colorbar.resize(
+    #     (png.size[0], int(png.size[0] / colorbar.size[0] * colorbar.size[1]))
+    # )
 
-    imgs_comb = np.vstack([png, colorbar])
-    imgs_comb = Image.fromarray(imgs_comb)
-    imgs_comb.save("test_POV2/0_colorbar.png")
+    # imgs_comb = np.vstack([png, colorbar])
+    # imgs_comb = Image.fromarray(imgs_comb)
+    # imgs_comb.save("test_POV2/0_colorbar.png")
